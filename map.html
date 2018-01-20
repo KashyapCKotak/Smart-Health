@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Geolocation</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+  <form id="zipForm" action="mapPHP.php" method="GET">
+		<input type="hidden" name="zipip" id="zipip"></input>
+		<!--<input type="submit" id="zipsub" name="zipsub">-->
+	</form>
+    <div id="map"></div>
+	<input type="hidden" value="" id="hiddenName">
+	<input type="hidden" value="" id="hiddenLat">
+	<input type="hidden" value="" id="hiddenLon">
+    <script>
+      // Note: This example requires that you consent to location sharing when
+      // prompted by your browser. If you see the error "The Geolocation service
+      // failed.", it means you probably did not give permission for the browser to
+      // locate you.
+
+	  var latitude;
+	  var longitude;
+	  var zip;
+	  var map;
+	  var infowindow;
+	  var nameDatatemp=[];
+	  var nameData=[];
+	  var latData=[];
+	  var lonData=[];
+	  var marker, i;
+	  
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: -34.397, lng: 150.644},
+          zoom: 14,
+		  mapTypeId: google.maps.MapTypeId.ROADMAP
+        });
+        infoWindow = new google.maps.InfoWindow({map: map});
+
+        // Try HTML5 geolocation.
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+			
+			latitude=position.coords.latitude;
+			longitude=position.coords.longitude;
+			
+            //infoWindow.setPosition(pos);
+            //infoWindow.setContent('Location found.');
+            map.setCenter(pos);
+			pinCode();
+          }, function() {
+            handleLocationError(true, infoWindow, map.getCenter());
+          });
+		  pinCode();
+        } else {
+          // Browser doesn't support Geolocation
+          handleLocationError(false, infoWindow, map.getCenter());
+        }
+		
+      }
+
+      function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+        infoWindow.setContent(browserHasGeolocation ?
+                              'Error: The Geolocation service failed.' :
+                              'Error: Your browser doesn\'t support geolocation.');
+      }
+	  ////////////////////////////////////////////////////////////////////////////////////
+	  
+	  
+	  
+	  
+	  
+	  /////////////////////////////////////////////////////////////////////////////////////
+	  
+		
+		
+		function pinCode(){
+			var latlng = new google.maps.LatLng(latitude,longitude);
+			geocoder = new google.maps.Geocoder();
+				geocoder.geocode({'latLng': latlng}, function(results, status) {
+					if (status == google.maps.GeocoderStatus.OK) {
+						if (results[0]) {
+							for (j = 0; j < results[0].address_components.length; j++) {
+								if (results[0].address_components[j].types[0] == 'postal_code')
+								{//alert("Zip Code: " + results[0].address_components[j].short_name);
+									zip=results[0].address_components[j].short_name;
+									console.log(zip);
+									//document.getElementById("zipip").value=zip;
+									//document.getElementById("zipFrom").submit();
+									tophpname(zip);
+								}
+							}
+						}
+					} //else {
+						//alert("Geocoder failed due to: " + status);
+					//}
+				});
+		}
+		
+		
+		
+		// document.getElementById("zipFrom").submit();
+		function tophpname(zipcode) {
+				/*$.ajax({
+						url: "<?php echo site_url('mapPHPname.php'); ?>",
+						type: 'POST',
+						data: "Zip=" +zipcode,
+						dataType:"json",
+						success: function(nameData) {
+							console.log(nameData);
+						}
+					    })*/
+				xmlhttp = new XMLHttpRequest();
+				xmlhttp.onreadystatechange=function(){
+				 if (xmlhttp.readyState==4 && xmlhttp.status==200)
+				 {
+						nameData= xmlhttp.responseText;
+						//nameDatatemp=nameDatatemp.replace("[\"","");
+						//nameDatatemp=nameDatatemp.replace("\"]","");
+						//nameDatatemp=nameDatatemp.replace("\",\"",",");
+						//nameData=nameDatatemp.split(',');
+						//var nameData = JSON.parse(xmlhttp.responseText).split(",");
+						console.log("name[0]="+nameData[0]+"::nameData:"+nameData+"::length="+nameData.length);
+						document.getElementById("hiddenName").value=nameData;
+						
+						//alert("names"+nameData);
+					}
+					
+				}
+				console.log("name"+nameData);
+				console.log("HI"+document.getElementById("hiddenName").value);
+				xmlhttp.open("GET",'mapPHPname.php?Zip="'+zipcode+'"',true);
+				xmlhttp.send();
+				//alert("tophpname"+nameData);
+				//tophplat(zipcode,nameData);
+		//}
+		
+		//function tophplat(zipcode,nameData) {
+				/*$.ajax({
+						url: "<?php echo site_url('mapPHPlat.php'); ?>",
+						type: 'POST',
+						data: "Zip=" +zipcode,
+						dataType:"json",
+						success: function(latData) {
+							console.log(latData);
+						}
+					    })*/
+				xmlhttp2 = new XMLHttpRequest();
+				xmlhttp2.onreadystatechange=function(){
+					if (xmlhttp2.readyState==4 && xmlhttp2.status==200)
+					{
+						latDatatemp = xmlhttp2.responseText;
+						latDatatemp=latDatatemp.replace("[\"","");
+						latDatatemp=latDatatemp.replace("\"]","");
+						latDatatemp=latDatatemp.replace("\",\"",",");
+						latData=latDatatemp.split(',');
+						console.log("lat"+latData);
+						document.getElementById("hiddenLat").value=latData;
+					}
+				}
+				xmlhttp2.open("GET",'mapPHPlat.php?Zip="'+zipcode+'"',true);
+				xmlhttp2.send();
+				//alert("tophplat");
+				//tophplon(zipcode,nameData,latData);
+		//}
+		
+		//function tophplon(zipcode,nameData,latData) {
+				/*$.ajax({
+						url: "<?php echo site_url('mapPHPlon.php'); ?>",
+						type: 'POST',
+						data: "Zip=" +zipcode,
+						dataType:"json",
+						success: function(latData) {
+							console.log(latData);
+						}
+					    })*/
+				xmlhttp3 = new XMLHttpRequest();
+				xmlhttp3.onreadystatechange=function(){
+					if (xmlhttp3.readyState==4 && xmlhttp3.status==200)
+					{
+						lonDatatemp = xmlhttp3.responseText;
+						lonDatatemp=lonDatatemp.replace("[\"","");
+						lonDatatemp=lonDatatemp.replace("\"]","");
+						lonDatatemp=lonDatatemp.replace("\",\"",",");
+						lonData=lonDatatemp.split(',');
+						console.log("lon"+lonData);
+						document.getElementById("hiddenLon").value=lonData;
+					}
+				}
+				xmlhttp3.open("GET",'mapPHPlon.php?Zip="'+zipcode+'"',true);
+				xmlhttp3.send();
+				
+				interval = setInterval("getResult()", 1000);
+				// Alert the value of result and clear interval
+				console.log("out");
+				//mark(nameData,latData,lonData);
+		}
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	function getResult()
+	{
+				// once we get a result, turn interval off. 
+	 if(nameData != null && latData != null && lonData != null)
+	  {
+		console.log(nameData);
+		interval = clearInterval(interval);
+		// we're clearly out of the onreadystatechange scope with our result.
+		mark(nameData,latData,lonData);
+	  }
+	}
+
+	
+	function mark()
+	{
+	var infowindow = new google.maps.InfoWindow();
+	
+	//alert("in"+nameData);
+	
+	//nameData=document.getElementById("hiddenName").value;
+	//latData=document.getElementById("hiddenLat").value;
+	//lonData=document.getElementById("hiddenLon").value;
+	console.log("nameData;"+nameData[0]);
+	nameData=nameData.replace("[\"","");
+	nameData=nameData.replace("\"]","");
+	nameData=nameData.replace("\",\"",",");
+	nameData=nameData.split(',');
+	
+	console.log(nameData[0]+";"+nameData[1]+";"+nameData[2]+";"+nameData[3]);
+	console.log(latData+";"+latData.length);
+	console.log(lonData+";"+lonData.length);
+	var len=0;
+		for (var i = 0; i < nameData.length; i++) {
+		if (nameData[i] !== undefined) {
+			len++;
+			console.log("len:"+len);
+			}
+		}
+		console.log(nameData[0]);
+		console.log(JSON.stringify(nameData));
+		console.log(Object.keys(nameData).length);
+		
+		for (i = 0; i < len; i++) {  
+		  marker = new google.maps.Marker({
+			position: new google.maps.LatLng(latData[i], lonData[i]),
+			map: map
+		  });
+		  //alert("markers:"+marker)
+
+		  google.maps.event.addListener(marker, 'click', (function(marker, i) {
+			return function() {
+			  infowindow.setContent(nameData[i]);
+			  infowindow.open(map, marker);
+			}
+		  })(marker, i));
+		}
+	}
+
+	console.log("HI"+document.getElementById("hiddenName").value);
+		
+		
+		
+
+	  
+	//////////////////////////////////////////////////////////////////////////////////////
+	  
+    </script>
+	
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVSosjU8J9UUPRPX-FjePdU7UQawZvvl0&callback=initMap">
+    </script>
+	
+	
+	
+  </body>
+</html>
